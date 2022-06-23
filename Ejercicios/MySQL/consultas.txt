@@ -1,0 +1,38 @@
+partiendo de paises, crear 3 vistas logicas,
+1.- Pais_ciudad: 
+	pais as pais
+	ciudad as ciudad
+	reunion natural
+
+create view pais_ciudad as
+select p.nombre as pais,
+c.nombre as ciudad
+from pais p, ciudad c
+where p.cod_pais= c.cod_pais;
+
+
+
+2.- Pais_idioma:
+	pais as pais
+	idioma as idioma
+	reunion natural
+
+create view pais_idioma as
+select p.nombre as pais,
+i.nombre as idioma
+from pais p, se_habla s, idioma i
+where p.cod_pais=s.cod_pais
+and s.cod_idioma=i.cod_idioma;
+
+3.- Pais_organizacion:
+	nombrepais as pais
+	siglas org as organizacion
+	reunion natural
+
+create view pais_organizacion as
+select p.nombre as pais,
+siglas as organizacion
+from pais p, pertenece_a pe, organizacion o
+where p.cod_pais=pe.cod_pais
+and pe.cod_organizacion=o.cod_organizacion;
+

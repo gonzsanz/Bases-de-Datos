@@ -1,0 +1,11 @@
+El conector ODBC entre Access y MySQL
+
+A partir del script del examen videoclub.sql,
+proceso de creacion en mysql, configurar el conector ODBC para esa base de datos,
+desde access:
+- Conectar a la BD de videoclub con el modo importar.
+- Una vez importada guardar un fichero de access llamado videloclub_importada.
+- Hacer una vinculacion 
+
+
+Entregar el pdf y el fichero de access con las tablas importadas

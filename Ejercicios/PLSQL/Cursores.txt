@@ -1,0 +1,355 @@
+1)BLOQUE DE CODIGO CON CURSOR QUE RECIBA COMPO PARAMETRO 2 EXTENSIONES, Y DEVUELVA PAIS Y CAPITAL CUYA EXTENSION ESTA COMPRENDIDA ENTRE ESOS DOS VALORES.
+
+SET SERVEROUTPUT ON;
+
+DECLARE
+    CURSOR c1 (extension1   NUMBER, extension2   NUMBER) IS
+    SELECT nombre,capital
+    FROM pais
+    WHERE extension between extension1 and extension2;
+
+    pais varchar2(50);
+    capital varchar2(50);
+    ext1 NUMBER;
+    ext2 NUMBER;
+
+BEGIN
+    ext1:=&Dame_extension1;
+    ext2:=&Dame_extension2;
+
+    IF NOT c1%isopen THEN
+        OPEN c1(ext1,ext2);
+    END IF;
+    
+    dbms_output.put_line('PAIS                CAPITAL');
+    FETCH c1 INTO pais,capital;
+    WHILE c1%found LOOP
+        dbms_output.put_line(pais||'        ' ||capital);
+        FETCH c1 INTO pais,capital;
+    END LOOP;
+
+    CLOSE c1;
+END;
+
+2)UN CURSOR QUE RECIBA EL NOMBRE DE UN CONTINENTE Y ME DIGA EL NOMBRE DE LAS CIUDADES DE PAISES DE ESE CONTINENTE.
+
+SET SERVEROUTPUT ON;
+
+DECLARE
+    CURSOR c1 (conti VARCHAR2) IS
+    SELECT c.nombre
+    FROM pais p, ciudad c 
+    WHERE p.cod_pais = c.cod_pais
+    AND p.continente LIKE conti;
+    
+    ccontinente VARCHAR2(50);
+    c_continente VARCHAR2(50);
+    
+BEGIN
+
+    ccontinente:=&Dame_Continente;
+    
+    IF NOT c1%isopen THEN
+        OPEN c1(ccontinente);
+    END IF;
+    
+    dbms_output.put_line('Ciudades de ' || ccontinente);
+    
+    FETCH c1 INTO c_continente;
+    WHILE c1%found LOOP
+        dbms_output.put_line(c_continente);
+        FETCH c1 INTO c_continente;
+    END LOOP;
+
+    CLOSE c1;
+END;
+
+3)UN CURSOR QUE RECIBA EL NOMBRE DE UN IDIOMA Y ME DIGA CUANTAS CIUDADES HAY POR CADA PAIS QUE HABLA ESE IDIOMA.
+
+SET SERVEROUTPUT ON;
+
+DECLARE
+
+    CURSOR c1 (pidioma varchar2) is
+    select p.nombre, count(*) as Total
+    from ciudad c, pais p, se_habla s, idioma i
+    where c.cod_pais=p.cod_pais
+    and p.cod_pais=s.cod_pais
+    and s.cod_idioma=i.cod_idioma
+    and i.nombre like pidioma
+    group by p.nombre;
+    
+    p_idioma varchar2(50);
+    p_pais varchar2(50);
+    i_idioma varchar2(50);
+    
+BEGIN
+
+    p_idioma:=&Dame_Idioma;
+    
+    IF NOT c1%isopen THEN
+        OPEN c1(p_idioma);
+    END IF;
+    
+    dbms_output.put_line('PAIS                 TOTAL');
+    
+    FETCH c1 INTO p_pais,i_idioma;
+    WHILE c1%found LOOP
+        dbms_output.put_line(p_pais || '                   '||i_idioma);
+        FETCH c1 INTO p_pais,i_idioma;
+    END LOOP;
+
+    CLOSE c1;
+END;
+
+4)REALIZAR UNA FUNCION QUE RECIBA COMO ARGUMENTOS EL NOMBRE DE UN DEPARTAMENTO Y UN NUMERO DE HIJOS Y DEVUELVA COMO RESULTADO EL 
+NUMERO DE EMPLEADOS QUE TIENE ESE DEPARTAMENTO Y EL NUMERO DE HIJOS
+REALIZAR UN BLOQUE DE CODIGO QUE PIDA AL USUARIO EL NOMBRE DE UN DEPARTAMENTO E INVOQUE A LA FUNCION CONTROLANDO 
+LA POSIBILIDAD DE QUE PUEDA DEVOLVER 0, EN CUO CASO MOSTRARA "NO HAY NINGUN EMPLEADO EN ESTE DEPARTAMENTO CON ESTE NUMERO DE HIJOS".
+
+SET SERVEROUTPUT ON;
+
+DECLARE
+
+depto VARCHAR2(50);
+hijos number;
+
+totalemple number;
+
+BEGIN
+
+depto:=&nombre_departamento;
+hijos:=&numero_de_hijos;
+
+totalemple:=depto_hijos(depto,hijos);
+
+IF (totalemple = 0) THEN
+
+	DBMS_OUTPUT.PUT_LINE('No hay empleados con ' || hijos|| ' hijos en el departamento' || depto);
+ELSE
+
+	DBMS_OUTPUT.PUT_LINE('Hay ' || totalemple || ' con ' || hijos || ' hijos en el departamento ' || depto);
+
+
+END IF;
+_------------------------------------------------
+create or replace FUNCTION depto_hijos (
+    pdepto IN VARCHAR2,
+    phijos IN NUMBER
+) RETURN NUMBER AS
+    total NUMBER;
+BEGIN
+    SELECT
+        COUNT(*)
+    INTO total
+    FROM
+        tdepto d,
+        temple e
+    WHERE
+            d.numde = e.numde
+        AND nomde LIKE pdepto
+        AND numhi = phijos;
+
+    RETURN total;
+END depto_hijos;
+
+
+END;
+
+
+5)EN EMPLEADOS, CREAR UN PROCEDIMIENTO QUE RECIBA COMO PARAMETRO UN NUMERO DE HIJOS Y QUE PARA LOS EMPLEADOS QUE TENGAN ESTOS HIJOS O MAS, 
+Y QUE ADEMAS TENGAN COMISION, AUMENTE LA COMISION ACTUAL EN UN 2% DE SU COMISION ACTUAL POR CADA HIJO.
+
+CREATE OR REPLACE PROCEDURE AUMENTA_COMIS 
+(
+  PHIJOS IN NUMBER 
+) AS 
+
+    cursor c1 is
+    select comis
+    from temple
+    where numhi>=phijos
+    and comis is not null
+    for update;
+    
+BEGIN
+
+    for reg_emple in c1 loop
+        update temple set comis = comis+(0.02*comis*numhi) where current of c1;
+    end loop;
+    commit;
+  NULL;
+END AUMENTA_COMIS;
+
+6)CREAR UN PROCEDIMIENTO SIMILAR AL ANTERIOR QUE RECIBA UN NUMERO DE HIJOS Y QUE TE RECUPERE LAS 
+COMISIONES DE LOS EMPLEADOS QUE TIENEN ESE O MAS NUMERO DE HIJOS TENGAN O NO TENGAN COMISION.
+EL PROCEDIMIENTO AUMENTARA LA COMISION EN UN 2% POR CADA HIJO, PERO DECLARARA UNA EXCEPCION PARA QUE CUANDO SE ECNCUENTRE UN EMPLEADO CON COMISON NULA
+LANCE UNA EXCEPCION QUE DIGA "Empleado con comision nula, no se puede actualizar".
+
+CREATE OR REPLACE PROCEDURE AUMENTA_COMIS_EXCEPCION 
+(
+  PHIJOS IN NUMBER 
+) AS 
+
+    cursor c1 is
+    select comis
+    from temple
+    where numhi>=phijos
+    for update;
+    
+    nula exception;
+    
+BEGIN
+
+    for reg_emple in c1 loop
+        if reg_emple.comis is null then
+            raise nula;
+        else
+            update temple set comis = comis+(0.02*comis*numhi) where current of c1;
+        end if;
+    end loop;
+    commit;
+    
+    exception
+        when nula then
+            commit;
+            RAISE_APPLICATION_ERROR(-20000, 'Empleado con comision nula, no se puede actualizar');
+        when others then
+            dbms_output.put_line('Error ' || sqlcode|| sqlerrm);
+    
+  NULL;
+END AUMENTA_COMIS_EXCEPCION;
+
+7)EN PAISES, CREAR OTRA FUNCION LLAMADA NUM_IDIOMAS_PAIS QUE RECIBA EL CODIGO DE UN PAIS Y ME DEVUELVA EL NUMERO DE IDIOMAS QUE SE HABLAN EN ESE PAIS.
+CREAR UN PROCEDIMIENTO QUE RECIBA EL NOMBRE DE UN CONTINENTE Y QUE CON UN CURSOR QUE RECUPERE EL NOMBRE Y EL CODIGO DE LOS PAISES DE ESE CONTINENTE, ME HAGA
+UN LISTADO CCON UNA LINEA DE SALIDA QUE SEA" El pais de nombre (pais) tiene x ciudades y se hablan x idiomas".
+
+CREATE OR REPLACE FUNCTION num_idiomas_pais (
+    pcodigo IN NUMBER
+) RETURN NUMBER AS
+    total NUMBER;
+BEGIN
+    SELECT COUNT(*) AS idiomas
+    INTO total
+    FROM pais p, se_habla s
+    WHERE p.cod_pais = s.cod_pais
+    AND p.cod_pais = pcodigo;
+
+    RETURN total;
+END num_idiomas_pais;
+
+---------------------------------------------------------
+
+CREATE OR REPLACE PROCEDURE PAIS_IDIOMA_CONTINENTE 
+(
+  PCONTINENTE IN VARCHAR2 
+) AS 
+
+CURSOR c1 IS
+SELECT * 
+FROM pais
+WHERE continente LIKE PCONTINENTE; 
+
+BEGIN
+
+for reg_pais in c1 loop
+        dbms_output.put_line('El pais de nombre '|| reg_pais.nombre||' tiene '|| num_idiomas_pais(reg_pais.cod_pais) || ' ciudades y se hablan '|| num_idiomas_pais(reg_pais.cod_pais)|| ' idiomas');
+end loop;
+
+END PAIS_IDIOMA_CONTINENTE;
+
+
+8) CREAR UN PROCEDIMIETNO QUE RECIBA 3 PARAMETROS: EL NOMBRE DE UN CONTINENTE Y 2 EXTENSIONES E1 Y E2.
+EL PROCEDIMIENTO MOSTRARA EL NOMBRE Y LA CAPITAL DE LOS PAISES QUE PERTENECEN A ESE CONTINENTE Y CUYA EXTENSION ESTE COMPRENDIDA ENTRE E1 Y E2.
+ADEMAS CONTENDRA UNA EXCEPCION QUE CONTROLE QUE E2 ES MAYOR QUE E1, EN CASO CONTRARIO MOSTRARA EL MENSAJE DE ERROR "EXTENSIONES INVALIDAS"
+
+CREATE OR REPLACE PROCEDURE pais_continente_extension (
+    pcontinente   IN   VARCHAR2,
+    ext1          IN   NUMBER,
+    ext2          IN   NUMBER
+) AS
+
+    CURSOR c1 IS
+    SELECT
+        nombre,
+        capital
+    FROM
+        pais
+    WHERE
+        extension BETWEEN ext1 AND ext2
+        AND continente LIKE pcontinente;
+
+    error_ext EXCEPTION;
+BEGIN
+    IF ext2 <= ext1 THEN
+        RAISE error_ext;
+    END IF;
+    
+    for c1_reg in c1 loop
+        dbms_output.put_line(c1_reg.nombre|| '            ' || c1_reg.capital);
+    end loop;
+    
+    exception
+    when error_ext then
+        RAISE_APPLICATION_ERROR(-20000, 'Extensiones invalidas');
+    when others then
+        dbms_output.put_line('Error ' ||sqlcode||sqlerrm);
+END pais_continente_extension;
+
+9) PARAMETRO QUE RECIBA CONTINENTE Y SIGLAS DE ORGANIZACION. EL PROCEDIMIENTO MOSTRARA UN LISTADO CON EL NOMBRE Y LA CAPITAL DE LOS PAISES QUE PERTENECEN A ESE CONTINENTE Y A ESA ORGANIZACION.
+EN EL CASO DE QUE NO HAYA NINGUN PAIS, SE MOSTRARA LA EXCEPCION "NO HAY PAISES EN EL CONTINENTE X QUE PERTENEZCA A LA ORGANIZACION X)
+
+CREATE OR REPLACE PROCEDURE pais_continente_siglas (
+    pconti    IN   VARCHAR2,
+    psiglas   IN   VARCHAR2
+) AS
+
+    CURSOR c1 IS
+    SELECT
+        p.nombre    AS npais,
+        p.capital   AS capi
+    FROM
+        pais           p,
+        pertenece_a    pe,
+        organizacion   o
+    WHERE
+        p.cod_pais = pe.cod_pais
+        AND pe.cod_organizacion = o.cod_organizacion
+        AND continente LIKE pconti
+        AND siglas LIKE psiglas;
+
+    total NUMBER;
+    error_pais EXCEPTION;
+BEGIN
+    SELECT
+        COUNT(*)
+    INTO total
+    FROM
+        pais           p,
+        pertenece_a    pe,
+        organizacion   o
+    WHERE
+        p.cod_pais = pe.cod_pais
+        AND pe.cod_organizacion = o.cod_organizacion
+        AND continente LIKE pconti
+        AND siglas LIKE psiglas;
+
+    IF total = 0 THEN
+        RAISE error_pais;
+    END IF;
+    
+    FOR reg_pais IN c1 LOOP 
+        dbms_output.put_line(reg_pais.npais || '        '|| reg_pais.capi);
+    END LOOP;
+
+EXCEPTION
+    WHEN error_pais THEN
+        raise_application_error(-20000, 'No hay paises del contiente '|| pconti || ' pertenecientes a '|| psiglas);
+    WHEN OTHERS THEN
+        dbms_output.put_line('Error '|| sqlcode || sqlerrm);
+        
+END pais_continente_siglas;
+
+10)En la conexion paises, realizar procedimiento que reciba el nombre de un idioma, y haga un listado parecido al siguiente:
+el idioma X en el continente Y lo hablan Z paises
+nombre, capital de los paises

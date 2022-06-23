@@ -1,0 +1,11 @@
+1.- Entrando como root crear un nuevo esquema de base de datos.
+2.- Crear un usuario.
+3.- Otorgar todos los privilegios sobre la base de datos a ese usuario.
+4.- Añadir una nueva conexion en la pantalla principal con la base de datos y el usuario del paso anterior.
+5.- Iniciar la nueva conexion
+6.- En el menu file>new model cambiar el nombre del schema mydb al nombre de la base de datos que vamos a usar.
+7.- Add diagram> y empezar a añadir las tablas.
+8.- Database>forward engineer.
+9.- Elegir la conexion que creamos anteriormente.
+10.- Cuando aparezca la pestaña del script, guardarlo
+11.- Este tipo de diseño no permite introducir CHECK, por lo tanto al terminar, introducir alter tables para añadir los constraint necesarios.

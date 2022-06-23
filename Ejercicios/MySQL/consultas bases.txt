@@ -1,0 +1,201 @@
+obtener cuantos paises europeos pertenecen a la onu
+
+	select count(*) as 'Paises europeos en la ONU'
+	from pais p, pertenece_a pe, organizacion o
+	where p.cod_pais=pe.cod_pais
+	and o.cod_organizacion=pe.cod_organizacion
+	and siglas like 'ONU'
+	and continente like 'Europa';
+
+cuantos paises por continente pertenecen a la onu
+
+	select count(*) as 'Paises en la ONU'
+	from pais p, pertenece_a pe, organizacion o
+	where p.cod_pais=pe.cod_pais
+	and o.cod_organizacion=pe.cod_organizacion
+	and siglas like 'ONU'
+	and continente like 'Europa'
+	group by pais;
+
+obtener nombre de idiomas que se habla en españa
+
+	select i.nombre
+	from pais p, idioma i, se_habla s
+	where p.cod_pais = s.cod_pais
+	and i.cod_idioma = s.cod_idioma
+	and p.nombre like 'España';
+
+Nombre de los idiomas que se hablan en paises de Europa
+
+	select distinct i.nombre
+	from pais p, idioma i, se_habla s
+	where p.cod_pais = s.cod_pais
+	and i.cod_idioma = s.cod_idioma
+	and continente like 'Europa';
+
+Cuantos idiomas se hablan en cada uno de los paises de Europa
+
+	select p.nombre, count(*) as Idiomas
+	from pais p, idioma i, se_habla s
+	where p.cod_pais = s.cod_pais
+	and i.cod_idioma = s.cod_idioma
+	group by p.nombre;
+
+=======================
+EXAMEN 2 EV	      |
+=======================
+
+2)Obtener todos los datos de los productos de los que se han realizado pedidos durante 2020 y que contuviera +10 unidades en algun producto
+
+	select distinct p.*
+	from pedido pe, producto p, contiene c
+	where p.id = c.id_producto
+	and c.id_pedido=pe.id
+	and year(pe.fecha) = 2020
+	and unidades>10;
+
+3)Obtener nombre de la categoria y nombre del producto, de aquellos productos de los que existe un stock 
+en el almacen superior a la media del stock que existe de todos los productos
+
+	select c.nombre, p.nombre
+	from categoria c, producto p
+	where c.id=p.categoria
+	and stock > (select avg(stock) from producto);
+
+4)Obtener todos los datos de los productos de los que ha realizado algun
+pedido el usuario de nombre 'Admin' durante el año 2020
+
+	select distinct p.*
+	from producto p, contiene c, pedido pe, usuario u
+	where p.id=c.id_producto
+	and pe.id=c.id_pedido
+	and u.id=pe.usuario
+	and nombre like Admin
+	and year(pe.fecha)=2020;
+
+5)Para los pedidos realizados en los ultimos 6 meses, obtener, por nombre de usuario
+cuantos pedidos ha realizado cada usuario y el coste medio de esos pedidos
+
+	select nombre, count(*) as Pedidos, avg(coste) as 'Coste medio'
+	from pedido p, usuario u
+	where p.usuario=u.id
+	and timestampdiff(month, fecha, current_date)<=6
+	group by 1;
+
+6)Obtener por id de categoria de producto cuantos pedidos se han realizado durante el
+2020 de cada categoria para aquellas categorias de las que se hayan realizado +3 pedidos
+
+	select categoria, count(*) as 'Pedidos por categoria'
+	from pedido pe, contiene c, producto p
+	where pe.id=c.id_contiene
+	and c.id_producot=p.id
+	and year(pe.fecha)=2020
+	group by categoria
+	having count(*)>3;
+
+7)Obtener todos los datos de las categorias de las que existen productos con precio
+superior a cualquier producto de la categoria de nombre 'Manga corta'
+
+	select distinct c.*
+	from producto p, categoria c
+	where c.id=p.categoria
+	and precio > all(select precio from producto p, categoria c 
+			   where c.id=p.categoria 
+			   and c.nombre like 'Manga corta');
+
+8)Obtener todos los datos de los productos de la categoria de nombre 
+'Manga corta' que tenga un precio entre 12€ y 15€
+
+	select p.*
+	from producto p, categoria c
+	where c.id=p.categoria
+	and c.nombre like 'Manga corta'
+	and precio between 12 and 15;
+
+9)Obtener, para todos los productos de id categoria 1, id de pedido, fecha del pedido, y cuantos
+meses hace de cada uno de los pedidos (con el alias 'Pedido realizado hace (en meses)', para 
+todos los pedidos que se hayan realizado de esos productos.
+
+	select distinct p.categoria, c.id_pedido, pe.fecha, timestampdiff(month,pe.fecha,current_date) as 'Pedido realizado hace (en meses)'
+	from producto p, contiene c, pedido pe
+	where p.id=c.id_producto
+	and c.id_pedido=pe.id
+	and p.categoria = 1;
+
+10)Obtener, nombre de la categoria y todos los datos de los producto, 
+de aquellos productos cuyo nombre de categoria comience por 'Manga'
+
+	select c.nombre, p.*
+	from categoria c, producto p
+	where c.id=p.categoria
+	and c.nombre like 'Manga%';
+
+===================
+===================
+
+Añadir un nuevo atributo a la tabla pais que se llame 'Desarrollado' y que solo pueda valer S o N.
+
+alter table pais add Desarrollado enum('S','N');
+
+Teniendo en cuenta que el PIB puede ser nulo, rellenar desarrolado con el siguiente criterio
+- S a todos los paises cuyo pIB sea superior a la media de todos los PIB del mundo.
+- El resto sera N
+
+update pais set Desarrollado = 'N' where PIB is not null;
+update pais set Desarrollado = 'S' where PIB is not null and PIB > 406696,71;
+
+Obtener cuantos paises desarrollados o no hay por continente
+
+	select continente, count(*), desarrollado
+	from pais
+	group by 1,3;
+
+
+Obtener todos los datos de los clientes de los que hubo que reparar un vehiulo suyo durante el año 2021
+
+	select c.*
+	from cliente c, vehiculo v, reparacion r
+	where c.dni=v.cliente
+	and v.matricula=r.matricula
+	and year(fecha)=2021;
+
+
+
+Obtener cuantas piezas han necesitado vehiculos de la marca Renault en las operaciones que hay almacenadas hasta ahorra
+
+	select count(n.pieza) as Número de piezas
+	from vehiculo v, reparacion r, necesita n
+	where v.matricula=r.matricula
+	and r.ref=n.reparacion
+	and v.marca like Renault
+
+
+nombres de los idiomas que se hablan en  paises cuyo numero de habitantes es superior al numero de habitantes de españa,francia y portugal
+
+	select distinct i.nombre
+	from pais p, se_habla se, idioma i
+	where p.cod_pais=se.cod_pais
+	and se.cod_idioma=i.idioma
+	and num_hab > all (select num_hab from pais 
+			   where nombre in ('España','Francia','Portugal'));
+
+Obtener por nombre de pais cuantos idiomas se habla en cada pais para esos paises en los que se hable mas de un idioma, obtener cuantos
+
+	select p.nombre, count(*)
+	from pais p, se_habla se, idioma i
+	where p.cod_pais=se.cod_pais
+	and se.cod_idioma=i.idioma
+	group by p.nombre
+	having count(*)>1;
+
+Obtener por continente y por pais cuantos paises limitan con cada uno de los paises ordenado por continente y pais
+
+	select continente, pais, count(*) as 'Limita con'
+	from pais p, limita_con l
+	where p.cod_pais=l.cod_pais_1
+	group by continente,pais
+	order by 1,2
+
+
+
+

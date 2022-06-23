@@ -1,0 +1,3 @@
+A partir del modelo relacional de banco, crear una base de datos llamada banco, un usuario banco con clave banco, otorgar privilegios, crear conexion en workbench llamado banco.
+Obtener modelo workbench y script ingenieria adelantada.
+Entregar en pdf con portada, indice, estilos
